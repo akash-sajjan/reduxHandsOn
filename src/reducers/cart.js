@@ -1,29 +1,47 @@
 import { ADD_TO_CART, CHECKOUT_REQUEST, CHECKOUT_FAILURE } from "../constants/ActionTypes";
 
-const initialstate = {
+const initialState = {
   addedIds: [],
   quantityById: {},
 };
 
-// Reducers for corresponding Actions
-const cart = (state = initialstate, action) => {
+const addedIds = (state = initialState.addedIds, action) => {
   switch (action.type) {
     case ADD_TO_CART:
-      const addId = [...state.addedIds, action.productId];
-      const count = action.productId;
-      let quant = { ...state.quantityById };
-      quant[action.productId] = 1;
-      return { ...state, addedIds: addId, quantityById: quant };
-
-    case CHECKOUT_REQUEST:
-      return state;
-
-    case CHECKOUT_FAILURE:
-      const text = "cart state";
-      return text;
-
+      if (state.indexOf(action.productId) !== -1) {
+        return state;
+      }
+      return [...state, action.productId];
     default:
       return state;
+  }
+};
+
+const quantityById = (state = initialState.quantityById, action) => {
+  switch (action.type) {
+    case ADD_TO_CART:
+      const { productId } = action;
+      return { ...state, [productId]: (state[productId] || 0) + 1 };
+    default:
+      return state;
+  }
+};
+
+export const getQuantity = (state, productId) => state.quantityById[productId] || 0;
+
+export const getAddedIds = (state) => state.addedIds;
+
+const cart = (state = initialState, action) => {
+  switch (action.type) {
+    case CHECKOUT_REQUEST:
+      return initialState;
+    case CHECKOUT_FAILURE:
+      return action.cart;
+    default:
+      return {
+        addedIds: addedIds(state.addedIds, action),
+        quantityById: quantityById(state.quantityById, action),
+      };
   }
 };
 
